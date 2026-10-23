@@ -1,0 +1,423 @@
+@import "tailwindcss";
+@import "@fontsource-variable/newsreader/opsz.css";
+@import "@fontsource-variable/newsreader/opsz-italic.css";
+@import "@fontsource-variable/hanken-grotesk/index.css";
+@import "@fontsource/reenie-beanie/400.css";
+@import "@fontsource/tiro-devanagari-hindi/devanagari-400.css";
+@import "@fontsource/tiro-devanagari-hindi/devanagari-400-italic.css";
+
+/* Day: ivory paper, ink, a little burgundy. */
+:root {
+  --paper: #f2ede3;
+  --paper-2: #e9e2d4;
+  --ink: #1b1815;
+  --charcoal: #4a4540;
+  --faint: #8a8279;
+  --rule: #d6cdbd;
+  --burgundy: #7a2f36;
+  --umber: #8b6b4a;
+  --grain-opacity: 0.07;
+  --still-filter: saturate(0.82) contrast(1.02) sepia(0.08);
+  color-scheme: light;
+}
+
+/* Night: after the screening. Same ink and paper, turned around. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1a1714;
+    --paper-2: #24201c;
+    --ink: #ece5d8;
+    --charcoal: #b8ad9e;
+    --faint: #847a6f;
+    --rule: #3a342e;
+    --burgundy: #c98a8f;
+    --umber: #c4a27c;
+    --grain-opacity: 0.09;
+    --still-filter: saturate(0.78) contrast(1.04) brightness(0.92);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #1a1714;
+  --paper-2: #24201c;
+  --ink: #ece5d8;
+  --charcoal: #b8ad9e;
+  --faint: #847a6f;
+  --rule: #3a342e;
+  --burgundy: #c98a8f;
+  --umber: #c4a27c;
+  --grain-opacity: 0.09;
+  --still-filter: saturate(0.78) contrast(1.04) brightness(0.92);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-ink: var(--ink);
+  --color-charcoal: var(--charcoal);
+  --color-faint: var(--faint);
+  --color-rule: var(--rule);
+  --color-burgundy: var(--burgundy);
+  --color-umber: var(--umber);
+  --font-serif: "Newsreader Variable", "Tiro Devanagari Hindi", Georgia, serif;
+  --font-sans: "Hanken Grotesk Variable", "Helvetica Neue", Arial, sans-serif;
+  --font-hand: "Reenie Beanie", cursive;
+}
+
+@layer base {
+  html {
+    background: var(--paper);
+  }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: 1.125rem;
+    line-height: 1.6;
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    min-height: 100dvh;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--burgundy) 25%, transparent);
+  }
+  :focus-visible {
+    outline: 1px solid var(--burgundy);
+    outline-offset: 4px;
+  }
+}
+
+/* Film grain, laid over everything, never in the way. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  mix-blend-mode: multiply;
+}
+:root[data-theme="dark"] body::after {
+  mix-blend-mode: screen;
+  filter: invert(1);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) body::after {
+    mix-blend-mode: screen;
+    filter: invert(1);
+  }
+}
+
+@layer components {
+  /* Small sans metadata, the quiet voice of the page. */
+  .meta {
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
+    color: var(--charcoal);
+  }
+  .hand {
+    font-family: var(--font-hand);
+    color: var(--umber);
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+  .display {
+    font-family: var(--font-serif);
+    font-variation-settings: "opsz" 72;
+    font-weight: 300;
+    letter-spacing: -0.015em;
+    line-height: 1.02;
+  }
+  .rule {
+    border-top: 1px solid var(--rule);
+  }
+  /* Stills: slightly faded, like a print that has been in a drawer. */
+  .still {
+    filter: var(--still-filter);
+  }
+  .poster {
+    position: relative;
+    display: block;
+    aspect-ratio: 2 / 3;
+    background: var(--paper-2);
+    overflow: hidden;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+  }
+  .link-quiet {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 250ms ease;
+  }
+  .link-quiet:hover,
+  .link-quiet:focus-visible,
+  a:hover .link-quiet {
+    background-size: 100% 1px;
+  }
+  .link-underline {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--rule);
+  }
+  .link-underline:hover {
+    text-decoration-color: currentColor;
+  }
+
+  /* A review or a note, set like the body of an essay. */
+  .essay {
+    font-size: 1.25rem;
+    line-height: 1.7;
+    max-width: 34em;
+    overflow-wrap: break-word;
+  }
+  .essay p + p {
+    margin-top: 1em;
+  }
+  .essay b,
+  .essay strong {
+    font-weight: 500;
+    font-style: italic;
+  }
+  .essay blockquote {
+    margin: 1.2em 0;
+    padding-left: 1.2em;
+    border-left: 1px solid var(--burgundy);
+    font-style: italic;
+  }
+  .dropcap > p:first-child::first-letter,
+  .dropcap.single::first-letter {
+    float: left;
+    font-variation-settings: "opsz" 72;
+    font-weight: 300;
+    font-size: 4.1em;
+    line-height: 0.82;
+    padding: 0.06em 0.09em 0 0;
+    color: var(--burgundy);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link-quiet {
+    transition: none;
+  }
+}
+
+@layer base {
+  body {
+    overflow-x: clip;
+  }
+}
+
+/* ---------- Contact sheet (home page) ---------- */
+
+/* The print itself: always ivory photo paper, in day and night, like a print on a desk. */
+.sheet-print {
+  background: #f6f2ea;
+  color: #1b1815;
+  padding: clamp(64px, 7vw, 96px) clamp(14px, 3.4vw, 48px) clamp(28px, 3.4vw, 48px);
+  box-shadow:
+    0 1px 2px rgba(60, 40, 20, 0.12),
+    0 24px 50px -28px rgba(60, 40, 20, 0.45);
+}
+:root[data-theme="dark"] .sheet-print {
+  box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.8);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sheet-print {
+    box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.8);
+  }
+}
+
+.sheet {
+  --film: #141211;
+  --edge-ink: #d39448;
+  --grease: #b3342b;
+  display: grid;
+  gap: clamp(18px, 2.4vw, 30px);
+}
+.sheet-strip {
+  background: var(--film);
+  padding: 0 clamp(6px, 0.8vw, 12px);
+  transform: rotate(var(--rot)) translateX(var(--x));
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.25),
+    0 10px 24px -14px rgba(40, 25, 10, 0.45);
+}
+.sheet-edge {
+  height: 30px;
+  display: flex;
+  align-items: center;
+}
+.sheet-holes {
+  width: 100%;
+  height: 12px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='12'><rect x='7' y='1' width='10' height='10' rx='2' fill='%23f6f2ea'/></svg>");
+  background-repeat: repeat-x;
+}
+.sheet-edge:first-child {
+  align-items: flex-start;
+  padding-top: 5px;
+}
+.sheet-edge:last-child {
+  align-items: flex-end;
+  padding-bottom: 5px;
+}
+.sheet-frames {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(6px, 0.8vw, 12px);
+}
+.sheet-frame {
+  position: relative;
+}
+.sheet-link {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: #2a2420;
+  transition:
+    transform 320ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 320ms;
+}
+/* Edge print: frame numbers above, the film's name below on hover. */
+.sheet-num,
+.sheet-cap {
+  position: absolute;
+  left: 2px;
+  font-family: var(--font-sans);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  color: var(--edge-ink);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.sheet-num {
+  top: -14px;
+  opacity: 0.75;
+}
+.sheet-cap {
+  bottom: -15px;
+  right: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transition: opacity 200ms;
+}
+/* The loupe: lift the frame you're looking at. */
+.sheet-frame:hover .sheet-link,
+.sheet-link:focus-visible {
+  transform: scale(1.32);
+  z-index: 5;
+  box-shadow: 0 18px 40px -10px rgba(0, 0, 0, 0.7);
+}
+.sheet-frame:hover {
+  z-index: 5;
+}
+.sheet-frame:hover .sheet-cap,
+.sheet-frame:focus-within .sheet-cap {
+  opacity: 1;
+}
+/* Developing: each frame comes up out of blank paper. */
+.sheet-img {
+  animation: develop 1600ms ease-out var(--d) both;
+}
+@keyframes develop {
+  0% {
+    opacity: 0;
+    filter: brightness(2.6) contrast(0.35) sepia(0.7);
+  }
+  35% {
+    opacity: 0.85;
+    filter: brightness(1.7) contrast(0.6) sepia(0.5);
+  }
+  100% {
+    opacity: 1;
+    filter: saturate(0.85) contrast(1.04) sepia(0.06);
+  }
+}
+/* Grease pencil. */
+.grease-loop {
+  position: absolute;
+  inset: -16% -9%;
+  width: 118%;
+  height: 132%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 6;
+}
+.grease-loop path {
+  fill: none;
+  stroke: var(--grease);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0.9;
+  animation: grease 1100ms cubic-bezier(0.55, 0.1, 0.35, 1) 2.4s forwards;
+}
+@keyframes grease {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.grease-note {
+  position: absolute;
+  left: 6%;
+  bottom: calc(100% + 34px);
+  width: max-content;
+  max-width: 260px;
+  font-family: var(--font-hand);
+  font-size: 1.75rem;
+  line-height: 0.95;
+  color: var(--grease);
+  transform: rotate(-2.5deg);
+  z-index: 6;
+  pointer-events: none;
+  animation: subtitle-in 700ms ease 3.3s both;
+}
+@keyframes subtitle-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 767px) {
+  .sheet-frames {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .sheet-frame:nth-child(n + 4) {
+    display: none;
+  }
+  .sheet-frame:hover .sheet-link {
+    transform: none;
+  }
+  .grease-note {
+    font-size: 1.4rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-img,
+  .grease-note {
+    animation: none;
+  }
+  .grease-loop path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .sheet-link {
+    transition: none;
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "_how": "Edit freely. {count} becomes the number of films in words. circledFilm is the film circled in red on the home page contact sheet: use the id from the end of its page URL, e.g. /films/pyaasa-1957 -> pyaasa-1957. Leave it empty to circle the latest film you rated 4.5 or 5 and wrote a review for.",
+  "headline": "{count} films, and the evenings I spent with them.",
+  "circledFilm": ""
+}
