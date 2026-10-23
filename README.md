@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sagar Pawar, a film diary
 
-## Getting Started
+A personal film diary built from my Letterboxd export: every film I've logged, my ratings and reviews,
+a diary by month, my watchlist and a few numbers. Next.js, statically generated, hosted on Vercel.
 
-First, run the development server:
+## How it fits together
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+data/letterboxd/      my Letterboxd export, unzipped
+scripts/enrich.ts     matches each film to TMDB and writes data/films.json
+data/films.json       everything the site reads (also the TMDB cache)
+data/overrides.json   manual fixes: "Title (Year)" -> TMDB id
+data/unmatched.md     report of films that need a manual fix
+content/site.json     home page headline and which film is circled on the contact sheet
+content/notes/        optional longer notes for any film page (see the README in there)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The site never calls TMDB itself. It only reads `data/films.json`, so a build needs no keys.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 1. Export from Letterboxd
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+On letterboxd.com go to **Settings → Data → Export your data**. You get a zip.
+Unzip it into `data/letterboxd/`, replacing what's there. The folder should contain `watched.csv`,
+`ratings.csv`, `diary.csv` and so on.
 
-## Learn More
+## 2. Get a TMDB key
 
-To learn more about Next.js, take a look at the following resources:
+Make a free account on themoviedb.org, then **Settings → API → Request an API key** (pick "Personal").
+Either the short "API Key" or the long "API Read Access Token" works.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Copy `.env.example` to `.env.local` and paste it in:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+TMDB_API_KEY=your_key_here
+```
 
-## Deploy on Vercel
+`.env.local` is in `.gitignore` and never gets committed.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 3. Run the enrich script
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+npm install
+npm run enrich
+```
+
+It matches every film by title and year, then by year plus or minus one, then as a TV series,
+then by title alone (only when exactly one film has that title and the year is within 3).
+Anything it can't match safely goes into `data/unmatched.md` with the closest TMDB results.
+
+Results are cached in `data/films.json`, so running it again only looks up new films.
+Other options: `npm run enrich -- --refresh` refetches everything, `--offline` rebuilds from the CSVs without TMDB.
+
+### Fixing a wrong or missing match
+
+Find the film on themoviedb.org. The number in its address is the id, e.g. themoviedb.org/movie/**155**-the-dark-knight.
+Add it to `data/overrides.json` using the exact `Title (Year)` from the report, then run `npm run enrich` again:
+
+```json
+{
+  "The Dark Knight (2008)": 155,
+  "Loki (2021)": "tv:84958"
+}
+```
+
+Use `"tv:<id>"` for a series.
+
+## 4. Look at it locally
+
+```
+npm run dev
+```
+
+Then open http://localhost:3000.
+
+## 5. Deploy on Vercel
+
+1. Push the project to GitHub.
+2. On vercel.com: **Add New → Project**, pick the repo, click **Deploy**. Nothing to configure.
+
+Every push to `main` redeploys the site.
+
+The optional "Should I watch it?" feature only appears when `ANTHROPIC_API_KEY` is set
+(Vercel: Project → Settings → Environment Variables, then redeploy). Without it the site works fully
+and the feature stays hidden.
+
+## 6. After new watches
+
+1. Export from Letterboxd again and unzip over `data/letterboxd/`.
+2. `npm run enrich`
+3. Check `data/unmatched.md`, fix anything in `data/overrides.json`, run enrich again if you did.
+4. `git add . && git commit -m "New watches" && git push`
+
+## Credits
+
+Film details and images come from TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.

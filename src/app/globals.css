@@ -421,3 +421,8 @@ body::after {
     transition: none;
   }
 }
+
+/* Watchlist pick settling in. */
+.pick-in {
+  animation: subtitle-in 500ms ease both;
+}

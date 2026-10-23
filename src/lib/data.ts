@@ -17,7 +17,9 @@ const EMPTY: FilmsData = {
   cache: {},
 };
 
-const root = (...p: string[]) => path.join(process.cwd(), ...p);
+// Pages are built ahead of time, so these reads only happen at build. turbopackIgnore keeps
+// Vercel from bundling the whole project into the server code because of them.
+const root = (...p: string[]) => path.join(/*turbopackIgnore: true*/ process.cwd(), ...p);
 const readJson = <T,>(file: string, fallback: T): T =>
   fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf8")) as T) : fallback;
 
