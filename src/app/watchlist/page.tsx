@@ -1,14 +1,20 @@
 import type { Metadata } from "next";
 import { Poster } from "@/components/Poster";
-import { TonightPicker } from "@/components/TonightPicker";
+import { TonightPicker, type Suggestion } from "@/components/TonightPicker";
 import { watchlistSummaries } from "@/lib/data";
+import { reasonMaker } from "@/lib/stats";
 import { runtimeText } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Watchlist" };
+export const metadata: Metadata = {
+  title: "Watchlist",
+  description: "Films still to see, and a way to pick tonight's from the time you have.",
+};
 
 export default function WatchlistPage() {
   const films = watchlistSummaries().sort((a, b) => b.year - a.year);
   const oldest = [...films].sort((a, b) => a.year - b.year)[0];
+  const reasonsFor = reasonMaker();
+  const suggestions: Suggestion[] = films.map((f) => ({ ...f, ...reasonsFor(f) }));
 
   return (
     <div className="pt-14 sm:pt-20">
@@ -20,7 +26,7 @@ export default function WatchlistPage() {
       </div>
 
       <div className="rule mt-14 pt-12">
-        <TonightPicker films={films} />
+        <TonightPicker films={suggestions} />
       </div>
 
       <section aria-label="The whole watchlist" className="rule mt-24 pt-10">

@@ -21,27 +21,50 @@ export default function DiaryPage() {
     months.set(m, [...(months.get(m) ?? []), d]);
   }
   const years = [...new Set(diary.map((d) => d.watchedDate.slice(0, 4)))];
+  const monthsOf = (y: string) => [...months.keys()].filter((m) => m.startsWith(y));
   const rewatches = diary.filter((d) => d.rewatch).length;
   const undated = films.filter((f) => !f.watchedDate).length;
+  const reviewCount = films.filter((f) => f.review).length;
+  // A review belongs to a diary entry when it was written for that viewing (same date).
+  const excerpt = (filmId: string, date: string) => {
+    const r = byId.get(filmId)?.review;
+    if (!r || r.date !== date) return null;
+    const text = r.html.replace(/<br\s*\/?>/g, " ").replace(/<[^>]+>/g, "").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+    return text.length > 150 ? `${text.slice(0, text.lastIndexOf(" ", 150))}...` : text;
+  };
 
   return (
     <div className="pt-14 sm:pt-20">
       <div className="grid gap-x-10 gap-y-6 lg:grid-cols-12 lg:items-end">
         <h1 className="display text-[clamp(2.4rem,5vw,4.2rem)] lg:col-span-7">The diary</h1>
         <p className="meta max-w-[40ch] lg:col-span-5 lg:justify-self-end lg:text-right">
-          Every film I logged with the date I saw it. {diary.length} entries, {rewatches} of them second viewings.
+          Every viewing I logged with the date I saw it. {diary.length} entries, {rewatches} of them rewatches.{" "}
+          <Link href="/diary/reviews" className="link-underline">
+            Read all {reviewCount} reviews
+          </Link>
         </p>
       </div>
 
-      <nav aria-label="Jump to a year" className="meta mt-10 flex flex-wrap gap-x-5 gap-y-2 border-y border-rule py-3">
-        {years.map((y) => (
-          <a key={y} href={`#y${y}`} className="link-underline">
-            {y}
-          </a>
-        ))}
-        <a href="#before" className="link-underline text-faint">
-          Before the diary
-        </a>
+      <nav aria-label="Jump to a year or month" className="mt-10 border-y border-rule py-3">
+        <ul className="meta grid gap-y-1.5">
+          {years.map((y) => (
+            <li key={y} className="flex flex-wrap items-baseline gap-x-4">
+              <a href={`#y${y}`} className="link-underline w-10 text-ink">
+                {y}
+              </a>
+              {monthsOf(y).map((m) => (
+                <a key={m} href={`#m${m}`} className="link-underline text-faint hover:text-ink">
+                  {monthName(m).slice(0, 3)}
+                </a>
+              ))}
+            </li>
+          ))}
+          <li>
+            <a href="#undated" className="link-underline text-faint">
+              No viewing date ({undated})
+            </a>
+          </li>
+        </ul>
       </nav>
 
       <div className="mt-16 space-y-20">
@@ -49,7 +72,8 @@ export default function DiaryPage() {
           const year = m.slice(0, 4);
           const firstOfYear = idx === 0 || all[idx - 1][0].slice(0, 4) !== year;
           return (
-            <section key={m} id={firstOfYear ? `y${year}` : undefined} className="grid scroll-mt-8 gap-x-10 gap-y-5 lg:grid-cols-12">
+            <section key={m} id={`m${m}`} className="relative grid scroll-mt-8 gap-x-10 gap-y-5 lg:grid-cols-12">
+              {firstOfYear && <span id={`y${year}`} className="absolute -top-8" aria-hidden />}
               <header className="lg:col-span-3">
                 <div className="lg:sticky lg:top-8">
                   <h2 className="font-serif text-[1.7rem] italic leading-tight">{monthName(m)}</h2>
@@ -84,6 +108,11 @@ export default function DiaryPage() {
                             {f?.tmdb?.directors[0] && <>, {f.tmdb.directors[0]}</>}
                           </span>
                           <Stars rating={d.rating} className="text-[0.75rem] sm:hidden" />
+                          {excerpt(d.filmId, d.watchedDate) && (
+                            <span className="mt-1.5 block max-w-[52ch] font-serif text-[0.98rem] italic leading-snug text-charcoal">
+                              {excerpt(d.filmId, d.watchedDate)}
+                            </span>
+                          )}
                         </span>
                         <Stars rating={d.rating} className="hidden text-[0.8rem] sm:inline" />
                       </Link>
@@ -95,16 +124,21 @@ export default function DiaryPage() {
           );
         })}
 
-        <section id="before" className="grid scroll-mt-8 gap-x-10 gap-y-4 lg:grid-cols-12">
-          <h2 className="font-serif text-[1.7rem] italic leading-tight lg:col-span-3">Before the diary</h2>
-          <p className="essay text-[1.15rem] lg:col-span-7">
-            {undated} more films I watched before I started writing down dates. Most of them went in on one long evening in
-            October 2023.{" "}
-            <Link href="/films" className="link-underline">
-              They&apos;re all in the films list
-            </Link>
-            .
-          </p>
+        <section id="undated" className="grid scroll-mt-8 gap-x-10 gap-y-4 lg:grid-cols-12">
+          <h2 className="font-serif text-[1.7rem] italic leading-tight lg:col-span-3">No viewing date</h2>
+          <div className="essay text-[1.15rem] lg:col-span-7">
+            <p>
+              {undated} more titles are on my list without a date. Most went in during one long sitting in October 2023, from
+              before I kept a diary. Letterboxd only knows when I logged them, not when I watched them, so they aren&apos;t placed in
+              the months above.
+            </p>
+            <p>
+              <Link href="/films?seen=undated" className="link-underline">
+                See all {undated} in the films list
+              </Link>
+              .
+            </p>
+          </div>
         </section>
       </div>
     </div>

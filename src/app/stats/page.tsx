@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Section } from "@/components/Section";
 import { getData } from "@/lib/data";
+import { counts, hoursEstimate, yearSummaries } from "@/lib/stats";
 import { runtimeText } from "@/lib/format";
 import { INDIAN, languageName } from "@/lib/language";
 import type { Film } from "@/lib/types";
@@ -60,13 +61,10 @@ export default function StatsPage() {
   const { films, diary } = getData();
   if (!films.length) return null;
   const matched = films.filter((f) => f.tmdb);
-  const series = matched.filter((f) => f.tmdb!.kind === "tv").length;
-  const movies = films.length - series;
-
-  // Hours: runtime times how often I've seen it. Series count as the whole series.
-  const minutes = matched.reduce((sum, f) => sum + (f.tmdb!.runtime ?? 0) * f.timesWatched, 0);
-  const hours = Math.round(minutes / 60);
+  const c = counts();
+  const { hours, missing } = hoursEstimate();
   const days = Math.round(hours / 24);
+  const yearRows = yearSummaries();
 
   // Languages
   const langs = group(matched, (f) => [f.tmdb!.originalLanguage]).map((r) => ({ ...r, code: r.label, label: languageName(r.label) }));
@@ -114,18 +112,94 @@ export default function StatsPage() {
   return (
     <div className="pt-14 sm:pt-20">
       <h1 className="display text-[clamp(2.4rem,5vw,4.2rem)]">In numbers</h1>
-      <p className="mt-8 max-w-[30ch] font-serif text-[clamp(1.4rem,2.6vw,2.1rem)] leading-snug text-charcoal">
-        {fmt(movies)} films{series ? ` and ${series} series` : ""}. Roughly {fmt(hours)} hours in front of a screen, which is about{" "}
-        {days} days without sleep.
+      <p className="mt-8 max-w-[32ch] font-serif text-[clamp(1.4rem,2.6vw,2.1rem)] leading-snug text-charcoal">
+        {fmt(c.titles)} titles, and at least {fmt(c.viewings)} viewings. Somewhere around {fmt(hours)} hours in the dark, about{" "}
+        {days} days.
       </p>
-      <p className="meta mt-4 max-w-[60ch] text-faint">
-        Hours use each film&apos;s running time from TMDB, counted again for every rewatch. A series counts as all its episodes.
-      </p>
+
+      <Section
+        className="mt-20"
+        title="The count"
+        aside="What each number means, so nothing gets counted twice."
+      >
+        <dl className="grid gap-x-12 sm:grid-cols-2">
+          {(
+            [
+              [c.titles, "titles watched", `${fmt(c.films)} films and ${c.series} series. Each counted once.`],
+              [c.viewings, "viewings, at least", `One for every title, plus ${c.repeatViewings} known rewatches. Rewatches I never logged can't be counted.`],
+              [c.diaryEntries, "dated diary entries", `Viewings with a real date. ${c.diaryRewatches} of them are marked as rewatches.`],
+              [c.undated, "titles with no viewing date", "Logged on Letterboxd without a date, mostly in one sitting in October 2023. Their logging date is not used as a viewing date."],
+              [c.rated, "rated", c.unrated ? `${c.unrated} not rated.` : "Every title has a rating."],
+              [c.reviews, "written reviews", "The rest have a rating and nothing more."],
+            ] as const
+          ).map(([n, label, note]) => (
+            <div key={label} className="border-b border-rule py-4">
+              <dt className="flex items-baseline gap-3">
+                <span className="font-serif text-[1.9rem] leading-none tabular-nums">{fmt(n)}</span>
+                <span className="font-serif text-[1.1rem] italic">{label}</span>
+              </dt>
+              <dd className="meta mt-1.5 max-w-[44ch] text-faint">{note}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="meta mt-5 max-w-[64ch] text-faint">
+          Hours are an estimate: each title&apos;s running time from TMDB, counted once per known viewing. A series counts as all its
+          episodes. {missing} {missing === 1 ? "title has" : "titles have"} no running time on TMDB and {missing === 1 ? "is" : "are"} left out.
+        </p>
+      </Section>
+
+      <Section
+        className="mt-24"
+        title="Year by year"
+        aside="Only from dated diary entries. The undated titles can't be placed in a year, so they aren't here."
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] font-sans text-[0.875rem]">
+            <caption className="sr-only">Dated diary entries by year</caption>
+            <thead>
+              <tr className="border-b border-ink text-left text-faint">
+                <th scope="col" className="py-2 pr-4 font-normal">Year</th>
+                <th scope="col" className="py-2 pr-4 text-right font-normal">Entries</th>
+                <th scope="col" className="py-2 pr-4 text-right font-normal">Rewatches</th>
+                <th scope="col" className="py-2 pr-4 text-right font-normal">Average</th>
+                <th scope="col" className="py-2 pr-4 text-right font-normal">Hours, about</th>
+                <th scope="col" className="py-2 font-normal">Rated highest</th>
+              </tr>
+            </thead>
+            <tbody>
+              {yearRows.map((y) => (
+                <tr key={y.year} className="border-b border-rule align-baseline">
+                  <th scope="row" className="py-3 pr-4 text-left font-serif text-[1.15rem] font-normal">
+                    <Link href={`/diary#y${y.year}`} className="link-underline">
+                      {y.year}
+                    </Link>
+                  </th>
+                  <td className="py-3 pr-4 text-right tabular-nums">{y.entries}</td>
+                  <td className="py-3 pr-4 text-right tabular-nums text-charcoal">{y.rewatches || ""}</td>
+                  <td className="py-3 pr-4 text-right tabular-nums text-charcoal">{y.avgRating != null ? `${one(y.avgRating)}★` : ""}</td>
+                  <td className="py-3 pr-4 text-right tabular-nums text-charcoal">{y.hours}</td>
+                  <td className="py-3 font-serif text-[1rem]">
+                    {y.best.slice(0, 3).map((f, i, arr) => (
+                      <span key={f.id}>
+                        <Link href={`/films/${f.id}`} className="link-underline">
+                          {f.title}
+                        </Link>
+                        {i < arr.length - 1 ? ", " : ""}
+                      </span>
+                    ))}
+                    {y.best.length > 3 && <span className="meta text-faint"> and {y.best.length - 3} more</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Section>
 
       <Section
         className="mt-24"
         title="Languages"
-        aside={`${notEnglishShare} of every 10 films I log aren't in English. Average rating on the right.`}
+        aside={`${notEnglishShare} of every 10 titles I've watched aren't in English. Titles, with average rating on the right.`}
       >
         <div className="grid gap-x-12 gap-y-10 md:grid-cols-2">
           <div>

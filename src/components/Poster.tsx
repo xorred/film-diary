@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { posterUrl } from "@/lib/format";
 
 type Props = {
@@ -13,23 +16,26 @@ type Props = {
 };
 
 // A poster treated as a print: no rounded corners, a hairline edge, nothing on top of it.
+// If there's no poster, or TMDB's image fails to load, the title is set like a plain title card.
 export function Poster({ id, title, year, poster, sizes, big, priority }: Props) {
-  const body = poster ? (
-    <Image
-      src={posterUrl(poster, big ? "w500" : "w342")}
-      alt={`Poster for ${title} (${year})`}
-      fill
-      sizes={sizes}
-      priority={priority}
-      className="object-cover"
-    />
-  ) : (
-    // No poster on TMDB: set the title like a plain title card instead.
-    <span className="absolute inset-0 flex flex-col justify-between p-[9%]">
-      <span className="font-serif text-[clamp(0.9rem,1.3vw,1.2rem)] italic leading-tight">{title}</span>
-      <span className="meta">{year}</span>
-    </span>
-  );
+  const [failed, setFailed] = useState(false);
+  const body =
+    poster && !failed ? (
+      <Image
+        src={posterUrl(poster, big ? "w500" : "w342")}
+        alt={`Poster for ${title} (${year})`}
+        fill
+        sizes={sizes}
+        priority={priority}
+        onError={() => setFailed(true)}
+        className="object-cover"
+      />
+    ) : (
+      <span className="absolute inset-0 flex flex-col justify-between p-[9%]">
+        <span className="font-serif text-[clamp(0.8rem,1.3vw,1.2rem)] italic leading-tight">{title}</span>
+        <span className="meta">{year}</span>
+      </span>
+    );
 
   return id ? (
     <Link href={`/films/${id}`} className="poster" aria-label={`${title} (${year})`}>

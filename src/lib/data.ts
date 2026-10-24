@@ -80,6 +80,7 @@ export type FilmSummary = {
   isSeries: boolean;
   poster: string | null;
   reviewed: boolean;
+  seenYears: string[]; // years of dated diary entries; empty when the viewing date is unknown
 };
 
 export function summarize(f: Film): FilmSummary {
@@ -98,6 +99,7 @@ export function summarize(f: Film): FilmSummary {
     isSeries: f.tmdb?.kind === "tv",
     poster: f.tmdb?.posterPath ?? null,
     reviewed: Boolean(f.review),
+    seenYears: [...new Set(diaryFor(f.id).map((d) => d.watchedDate.slice(0, 4)))],
   };
 }
 
@@ -105,6 +107,10 @@ export type WatchlistSummary = {
   id: string;
   title: string;
   year: number;
+  addedDate: string;
+  tmdbUrl: string | null;
+  genres: string[];
+  langCode: string | null;
   langName: string;
   runtime: number | null;
   directors: string[];
@@ -119,6 +125,10 @@ export function watchlistSummaries(): WatchlistSummary[] {
     id: w.id,
     title: w.title,
     year: w.year,
+    addedDate: w.addedDate,
+    tmdbUrl: w.tmdb ? `https://www.themoviedb.org/${w.tmdb.kind === "tv" ? "tv" : "movie"}/${w.tmdb.id}` : null,
+    genres: w.tmdb?.genres ?? [],
+    langCode: w.tmdb?.originalLanguage ?? null,
     langName: w.tmdb ? languageName(w.tmdb.originalLanguage) : "Unknown",
     runtime: w.tmdb?.runtime ?? null,
     directors: w.tmdb?.directors ?? [],

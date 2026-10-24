@@ -12,10 +12,10 @@
   --paper-2: #e9e2d4;
   --ink: #1b1815;
   --charcoal: #4a4540;
-  --faint: #8a8279;
+  --faint: #6e665d;
   --rule: #d6cdbd;
   --burgundy: #7a2f36;
-  --umber: #8b6b4a;
+  --umber: #7a5c3e;
   --grain-opacity: 0.07;
   --still-filter: saturate(0.82) contrast(1.02) sepia(0.08);
   color-scheme: light;
@@ -28,7 +28,7 @@
     --paper-2: #24201c;
     --ink: #ece5d8;
     --charcoal: #b8ad9e;
-    --faint: #847a6f;
+    --faint: #9a8f83;
     --rule: #3a342e;
     --burgundy: #c98a8f;
     --umber: #c4a27c;
@@ -42,7 +42,7 @@
   --paper-2: #24201c;
   --ink: #ece5d8;
   --charcoal: #b8ad9e;
-  --faint: #847a6f;
+  --faint: #9a8f83;
   --rule: #3a342e;
   --burgundy: #c98a8f;
   --umber: #c4a27c;

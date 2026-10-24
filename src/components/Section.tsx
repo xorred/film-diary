@@ -11,12 +11,12 @@ export function Section({
   className?: string;
 }) {
   return (
-    <section className={`grid gap-x-10 gap-y-6 lg:grid-cols-12 ${className}`}>
+    <section className={`grid grid-cols-1 gap-x-10 gap-y-6 lg:grid-cols-12 ${className}`}>
       <div className="lg:col-span-3">
         <h2 className="font-serif text-[1.6rem] italic leading-tight">{title}</h2>
         {aside && <div className="meta mt-2 max-w-[30ch]">{aside}</div>}
       </div>
-      <div className="lg:col-span-9">{children}</div>
+      <div className="min-w-0 lg:col-span-9">{children}</div>
     </section>
   );
 }

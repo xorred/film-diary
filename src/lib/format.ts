@@ -44,11 +44,11 @@ export function stillUrl(path: string, size: "w780" | "w1280" | "original" = "w1
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }
 
-// When the film was seen, in words. Most undated films were logged in one go in Oct 2023.
+// When the film was seen, in words. Without a diary entry the viewing date is unknown: Letterboxd's
+// date is when it was logged, which only tells us it was seen on or before that day.
 export function seenText(f: { watchedDate: string | null; loggedDate: string }) {
   if (f.watchedDate) return `Seen ${longDate(f.watchedDate)}`;
-  if (f.loggedDate <= "2023-10-31") return "Seen before October 2023";
-  return `Logged ${longDate(f.loggedDate)}`;
+  return `Viewing date unknown. Logged ${longDate(f.loggedDate)}, so seen on or before then.`;
 }
 
 const ONES = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];

@@ -13,6 +13,7 @@ data/overrides.json   manual fixes: "Title (Year)" -> TMDB id
 data/unmatched.md     report of films that need a manual fix
 content/site.json     home page headline and which film is circled on the contact sheet
 content/notes/        optional longer notes for any film page (see the README in there)
+src/lib/stats.ts      every count on the site, with what each word means (title, viewing, diary entry)
 ```
 
 The site never calls TMDB itself. It only reads `data/films.json`, so a build needs no keys.
@@ -82,6 +83,17 @@ Every push to `main` redeploys the site.
 The optional "Should I watch it?" feature only appears when `ANTHROPIC_API_KEY` is set
 (Vercel: Project → Settings → Environment Variables, then redeploy). Without it the site works fully
 and the feature stays hidden.
+
+## Visitor analytics
+
+The site uses Vercel Web Analytics (`@vercel/analytics`, added once in `src/app/layout.tsx`).
+Turn it on once: in the Vercel dashboard open the project, go to the **Analytics** tab and click **Enable**.
+After the next deploy you'll see page views, visitors, top pages and referrers there. It sets no cookies.
+
+Locally the analytics script returns a 404. That's expected: it only exists on Vercel.
+
+There is deliberately no public visitor counter on the site. Vercel's analytics don't expose an all-time
+total to the page, and a homemade counter would need its own database. The numbers live in the dashboard.
 
 ## 6. After new watches
 

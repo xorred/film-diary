@@ -1,10 +1,12 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ContactSheet, type SheetFrame } from "@/components/ContactSheet";
 import { Ledger, type LedgerRow } from "@/components/Ledger";
 import { Poster } from "@/components/Poster";
 import { Section } from "@/components/Section";
+import { Stars } from "@/components/Stars";
 import { getData, getFilm, siteConfig } from "@/lib/data";
-import { longDate, numberWords } from "@/lib/format";
+import { longDate, numberWords, stillUrl } from "@/lib/format";
 import { languageName } from "@/lib/language";
 import type { Film } from "@/lib/types";
 
@@ -19,6 +21,20 @@ function firstLine(html: string, max = 64) {
     .trim();
   const cut = text.split(/(?<=[.!?…])\s/)[0];
   return cut.length <= max ? cut : `${cut.slice(0, cut.lastIndexOf(" ", max))}...`;
+}
+
+// A review as plain text, cut at a word boundary.
+function excerpt(html: string, max: number) {
+  const text = html
+    .replace(/<br\s*\/?>/g, " ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+  return text.length <= max ? text : `${text.slice(0, text.lastIndexOf(" ", max))}...`;
 }
 
 function list(items: string[]) {
@@ -69,6 +85,12 @@ export default function Home() {
   const langs = [...langCount].sort((a, b) => b[1] - a[1]).map(([c]) => languageName(c));
   const since = [...films].map((f) => f.loggedDate).sort()[0];
 
+  // Recent words from the diary: the latest reviews, apart from the featured one.
+  const recentReviews = films
+    .filter((f) => f.review && f.id !== circled?.id)
+    .sort((a, b) => b.review!.date.localeCompare(a.review!.date))
+    .slice(0, 3);
+
   const rows: LedgerRow[] = diary.slice(0, 10).flatMap((d) => {
     const f = byId.get(d.filmId);
     if (!f) return [];
@@ -105,6 +127,48 @@ export default function Home() {
         </p>
       </section>
 
+      {/* The featured film: the one circled on the sheet, with what I wrote about it */}
+      {circled?.tmdb && (
+        <section aria-labelledby="featured" className="mt-28 grid gap-x-10 gap-y-8 lg:grid-cols-12 lg:items-start">
+          <Link href={`/films/${circled.id}`} className="relative block aspect-[16/10] overflow-hidden bg-paper-2 lg:col-span-7">
+            {circled.tmdb.backdropPath && (
+              <Image
+                src={stillUrl(circled.tmdb.backdropPath, "w1280")}
+                alt={`A still from ${circled.title}`}
+                fill
+                sizes="(min-width: 1024px) 700px, 92vw"
+                className="still object-cover"
+              />
+            )}
+          </Link>
+          <div className="lg:col-span-5">
+            <p className="hand !text-burgundy">
+              the one in the red circle
+            </p>
+            <h2 id="featured" className="display mt-2 text-[clamp(2rem,3.6vw,3rem)]">
+              <Link href={`/films/${circled.id}`} className="link-quiet">
+                {circled.title}
+              </Link>
+            </h2>
+            <p className="meta mt-2">
+              {[circled.year, languageName(circled.tmdb.originalLanguage), circled.tmdb.directors[0] ?? ""].filter(Boolean).join(", ")}
+              {circled.watchedDate && <>. Seen {longDate(circled.watchedDate)}</>}.
+            </p>
+            <Stars rating={circled.rating} className="mt-2 block text-[0.9rem]" />
+            {circled.review && (
+              <>
+                <blockquote className="mt-6 max-w-[34em] font-serif text-[1.2rem] leading-relaxed">
+                  {excerpt(circled.review.html, 320)}
+                </blockquote>
+                <Link href={`/films/${circled.id}`} className="meta link-underline mt-4 inline-block">
+                  Read the whole review
+                </Link>
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* Lately */}
       <Section
         className="mt-32"
@@ -120,6 +184,36 @@ export default function Home() {
       >
         <Ledger rows={rows} />
       </Section>
+
+      {/* Recent words */}
+      {recentReviews.length > 0 && (
+        <Section
+          className="mt-28"
+          title="From the diary"
+          aside={
+            <>
+              Lines from my most recent reviews.{" "}
+              <Link href="/diary/reviews" className="link-underline">
+                All of them
+              </Link>
+            </>
+          }
+        >
+          <div className="grid gap-x-10 gap-y-12 md:grid-cols-3">
+            {recentReviews.map((f) => (
+              <figure key={f.id}>
+                <blockquote className="font-serif text-[1.15rem] leading-relaxed">{excerpt(f.review!.html, 200)}</blockquote>
+                <figcaption className="meta mt-3">
+                  <Link href={`/films/${f.id}`} className="link-underline text-ink">
+                    {f.title}
+                  </Link>
+                  , {longDate(f.review!.date)}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </Section>
+      )}
 
       {/* Always */}
       {keep.length > 0 && (
@@ -188,7 +282,8 @@ export default function Home() {
           </tbody>
         </table>
         <p className="meta mt-4 max-w-[60ch] text-faint">
-          And {undated} more from before I kept a diary, most of them logged in one long sitting in October 2023.
+          Plus {undated} titles with no viewing date on record, most of them logged in one sitting in October 2023. Those can&apos;t be
+          placed in a year, so they aren&apos;t counted above.
         </p>
       </Section>
 

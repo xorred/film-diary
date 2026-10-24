@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { Poster } from "@/components/Poster";
 import { Stars } from "@/components/Stars";
 import { diaryFor, filmsByWatched, getData, getFilm, noteFor } from "@/lib/data";
-import { longDate, runtimeText, seenText, stillUrl } from "@/lib/format";
+import { longDate, posterUrl, runtimeText, seenText, stillUrl } from "@/lib/format";
 import { languageName } from "@/lib/language";
 
 export const dynamicParams = false;
@@ -16,7 +16,17 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const f = getFilm((await params).id);
-  return f ? { title: `${f.title} (${f.year})` } : {};
+  if (!f) return {};
+  const text = f.review
+    ? f.review.html.replace(/<br\s*\/?>/g, " ").replace(/<[^>]+>/g, "").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/\s+/g, " ").trim()
+    : f.tmdb?.overview ?? "";
+  const description = `${f.rating != null ? `${f.rating}★. ` : ""}${text.slice(0, 180)}${text.length > 180 ? "..." : ""}`.trim();
+  const image = f.tmdb?.backdropPath ? stillUrl(f.tmdb.backdropPath, "w1280") : f.tmdb?.posterPath ? posterUrl(f.tmdb.posterPath, "w500") : null;
+  return {
+    title: `${f.title} (${f.year})`,
+    description,
+    openGraph: { title: `${f.title} (${f.year})`, description, images: image ? [{ url: image, alt: f.title }] : [] },
+  };
 }
 
 export default async function FilmPage({ params }: { params: Promise<{ id: string }> }) {

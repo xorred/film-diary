@@ -32,7 +32,7 @@ export function ContactSheet({
   const total = strips.flat().length;
   return (
     <div className="sheet-print">
-    <div className="sheet" role="list" aria-label="A contact sheet of films">
+    <div className="sheet" role="group" aria-label="A contact sheet of films">
       {strips.map((strip, r) => {
         const lay = LAY[r % LAY.length];
         return (
@@ -44,12 +44,12 @@ export function ContactSheet({
             <div className="sheet-edge">
               <span className="sheet-holes" aria-hidden />
             </div>
-            <div className="sheet-frames">
+            <ul className="sheet-frames" aria-label={`Strip ${r + 1}`}>
               {strip.map((f, k) => {
                 const num = strips.slice(0, r).reduce((sum, st) => sum + st.length, 0) + k + 1;
                 const isCircled = f.id === circled;
                 return (
-                  <div role="listitem" key={f.id} className={`sheet-frame ${isCircled ? "is-circled" : ""}`} style={{ ["--d" as string]: `${0.25 + (num / total) * 1.6}s` }}>
+                  <li key={f.id} className={`sheet-frame ${isCircled ? "is-circled" : ""}`} style={{ ["--d" as string]: `${0.25 + (num / total) * 1.6}s` }}>
                     <span className="sheet-num" aria-hidden>
                       {num} <span className="opacity-60">▸</span> {num}A
                     </span>
@@ -67,10 +67,10 @@ export function ContactSheet({
                         {note && <span className="grease-note">{note}</span>}
                       </>
                     )}
-                  </div>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
             <div className="sheet-edge">
               <span className="sheet-holes" aria-hidden />
             </div>
